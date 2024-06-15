@@ -12,42 +12,42 @@ __model = None
 def get_form_info():
     return __form_info
 
-# def get_estimated_price(
-#     apartment_type,
-#     metro_station,
-#     minutes_to_metro,
-#     region,
-#     number_of_rooms,
-#     area,
-#     living_area,
-#     kitchen_area,
-#     floor,
-#     number_of_floors,
-#     renovation_type
-# ):
+def get_estimated_price(
+    apartment_type,
+    metro_station,
+    minutes_to_metro,
+    region,
+    number_of_rooms,
+    area,
+    living_area,
+    kitchen_area,
+    floor,
+    number_of_floors,
+    renovation_type
+):
     
-#     is_penthouse = False
-#     if floor == number_of_floors:
-#         is_penthouse = True
+    is_penthouse = False
+    if floor == number_of_floors:
+        is_penthouse = True
       
-#     observation = [
-#         apartment_type,
-#         metro_station,
-#         minutes_to_metro,
-#         region,
-#         number_of_rooms,
-#         area,
-#         living_area,
-#         kitchen_area,
-#         floor,
-#         number_of_floors,
-#         renovation_type,
-#         is_penthouse
-#     ]
+    observation = [
+        apartment_type,
+        metro_station,
+        minutes_to_metro,
+        region,
+        number_of_rooms,
+        area,
+        living_area,
+        kitchen_area,
+        floor,
+        number_of_floors,
+        renovation_type,
+        is_penthouse
+    ]
 
-#     observation_df = pd.DataFrame([observation], columns=__column_names)
+    observation_df = pd.DataFrame([observation], columns=__form_info.keys())
 
-#     return round(__model.predict(observation_df)[0],4)
+    return round(__model.predict(observation_df)[0],4)
 
 
 def load_saved_artifacts():

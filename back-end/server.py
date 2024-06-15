@@ -3,12 +3,12 @@ from flask_cors import CORS
 import util
 import webbrowser
 from flask import make_response
-
+import logging
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
-
+logging.basicConfig(level=logging.DEBUG)
 def open_browser_tab():
     url = "http://localhost:5000"
     webbrowser.open_new_tab(url)
@@ -34,18 +34,22 @@ def favicon():
 
 @app.route('/predict_apartment_price', methods=['POST'])
 def predict_apartment_price():
+    data = request.get_json()
 
-    apartment_type = request.form['apartment_type']
-    metro_station = request.form['metro_station']
-    minutes_to_metro = int(request.form['minutes_to_metro'])
-    region = request.form['region']
-    number_of_rooms = int(request.form['number_of_rooms'])
-    area = float(request.form['area'])
-    living_area = float(request.form['living_area'])
-    kitchen_area = float(request.form['kitchen_area'])
-    floor = int(request.form['floor'])
-    number_of_floors = int(request.form['number_of_floors'])
-    renovation_type = request.form['renovation_type']
+    logging.debug("Received data: %s", data)
+
+    apartment_type = data.get('apartment_type')
+    metro_station = data.get('metro_station')
+    minutes_to_metro = int(data.get('minutes_to_metro', 0))
+    region = data.get('region')
+    number_of_rooms = int(data.get('number_of_rooms', 0))
+    area = float(data.get('area', 0))
+    living_area = float(data.get('living_area', 0))
+    kitchen_area = float(data.get('kitchen_area', 0))
+    floor = int(data.get('floor', 0))
+    number_of_floors = int(data.get('number_of_floors', 0))
+    renovation_type = data.get('renovation_type')
+
 
     observation = [
         apartment_type,
