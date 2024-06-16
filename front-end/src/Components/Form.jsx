@@ -150,7 +150,7 @@ function onMetroStationChange(value) {
             style={{width: 200}}
             placeholder="Select an apartment type"
             value={inputs.apartment_type}
-            onSelect={(value) => onSelectApartmentType('apartment_type', value)}
+            onSelect={onSelectApartmentType}
         >
           {data.apartment_type.map((item, index) => (
               <Option key={index} value={item}>
