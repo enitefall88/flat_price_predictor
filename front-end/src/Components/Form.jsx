@@ -1,11 +1,10 @@
-import React, {useState, useEffect} from "react"
-import * as Y from "yup"
-import { Button, Checkbox, Form, Input, Select,  } from 'antd';
+import React, { useState } from "react";
+import * as Y from "yup";
+import { Button, Checkbox, Form, Input, Select } from 'antd';
+
 const { Option } = Select;
+
 function useEditProfile(profile) {
-
-
-
   let [inputs, setInputs] = useState({
     apartment_type: profile.apartment_type || "",
     area: profile.area,
@@ -20,19 +19,17 @@ function useEditProfile(profile) {
     region: profile.region || "",
     renovation_type: profile.renovation_type || ""
   });
-  let [errors, setErrors] = useState({})
-  let [busy, setBusy] = useState(false)
-  return {inputs, errors, busy, setInputs, setErrors, setBusy}
+  let [errors, setErrors] = useState({});
+  let [busy, setBusy] = useState(false);
+  return { inputs, errors, busy, setInputs, setErrors, setBusy };
 }
 
-export default function EditProfileForm({data}) {
-  if (!data) return null; // Handle case where data is not yet loaded
+export default function EditProfileForm({ data }) {
+  if (!data) return null;
 
-  // Assuming the array is stored in data.array
-  const metro_stations = data.metro_station || []
+  const metro_stations = data.metro_station || [];
 
-
-  let {inputs, errors, busy, setInputs, setErrors, setBusy} = useEditProfile({
+  let { inputs, errors, busy, setInputs, setErrors, setBusy } = useEditProfile({
     area: "... sq m",
     floor: "1-300",
     kitchen_area: "Enter kitchen area...",
@@ -40,60 +37,47 @@ export default function EditProfileForm({data}) {
     minutes_to_metro: "Enter how far is subway station",
     number_of_floors: "Enter how many floors",
     number_of_rooms: "Enter how many rooms",
-  })
+  });
+
+  const schema = Y.object().shape({
+    // Define validation schema
+  });
 
   async function onChange(event) {
-    let {target: {type, name, value, checked}} = event
-    value = type == "checkbox" ? checked : value
-    // Validation here delays visual feedback but minimizes the # of DOM updates
-    let inputErrors = await schema.validateAt(name, {[name]: value}, {abortEarly: false})
-        .then(_ => ({[name]: ""}))
-        .catch(convert)
-    setInputs(inputs => ({...inputs, [name]: value}))
-    console.log(inputs)
-    setErrors({...errors, ...inputErrors})
+    let { type, name, value, checked } = event.target;
+    value = type === "checkbox" ? checked : value;
+    let inputErrors = await schema.validateAt(name, { [name]: value }, { abortEarly: false })
+      .then(() => ({ [name]: "" }))
+      .catch(err => ({ [name]: err.errors.join(", ") }));
+    setInputs(inputs => ({ ...inputs, [name]: value }));
+    setErrors(errors => ({ ...errors, ...inputErrors }));
   }
 
   function onSelectApartmentType(value) {
-  setInputs(inputs => ({ ...inputs, apartment_type: value }));
-}
-
-function onRegionChange(value) {
-  setInputs(inputs => ({ ...inputs, region: value }));
-}
-
-function onRenovationChange(value) {
-  setInputs(inputs => ({ ...inputs, renovation_type: value }));
-}
-
-function onMetroStationChange(value) {
-  setInputs(inputs => ({ ...inputs, selected_metro_station: value }));
-}
-  function onSubmit(afterSubmit) {
-    return async function (event) {
-      event.preventDefault();
-      setBusy(true);
-      let errors = await schema.validate(inputs, { abortEarly: false })
-        .then(_ => ({}))
-        .catch(convert);
-      setErrors(errors);
-      if (Object.keys(errors).length) {
-        setBusy(false);
-      } else {
-        await afterSubmit(inputs);
-        setBusy(false);
-      }
-    };
+    setInputs(inputs => ({ ...inputs, apartment_type: value }));
   }
-   async function handleSubmit(inputs) {
 
+  function onRegionChange(value) {
+    setInputs(inputs => ({ ...inputs, region: value }));
+  }
+
+  function onRenovationChange(value) {
+    setInputs(inputs => ({ ...inputs, renovation_type: value }));
+  }
+
+  function onMetroStationChange(value) {
+    setInputs(inputs => ({ ...inputs, selected_metro_station: value }));
+  }
+
+  async function handleSubmit(values) {
+    console.log(values);
     try {
       const response = await fetch('http://172.17.0.2:5000/predict_apartment_price', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(inputs)
+        body: JSON.stringify(values)
       });
       const data = await response.json();
       console.log('Response from server:', data);
@@ -103,126 +87,70 @@ function onMetroStationChange(value) {
     }
   }
 
-  // async function handleSubmit(inputs) {
-  //   await delay(500)
-  //   console.log(inputs)
-  // }
-
-  return <div className="p-3">
-    <h1 className="h3 mb-3">Input your Preferences</h1>
-    <Form autoComplete="off" style={{maxWidth: "800px"}}  onFinish={handleSubmit}>
-      <Form.Item className="form-group">
-        <label>Area</label> ({errors.area || "*"})<br/>
-        <Input name="area" className="form-control" type="number" value={inputs.area} onChange={onChange}/>
-      </Form.Item>
-      <Form.Item className="form-group">
-        <label>Floor</label> ({errors.floor || "*"})<br/>
-        <Input name="floor" className="form-control" type="number" value={inputs.floor} onChange={onChange}/>
-      </Form.Item>
-      <Form.Item className="form-group">
-        <label>Kitchen Area</label> ({errors.kitchen_area || "*"})<br/>
-        <Input name="kitchen_area" className="form-control" type="number" value={inputs.kitchen_area}
-               onChange={onChange}/>
-      </Form.Item>
-      <Form.Item className="form-group">
-        <label>Living Area</label> ({errors.living_area || "*"})<br/>
-        <Input name="living_area" className="form-control" type="number" value={inputs.living_area}
-               onChange={onChange}/>
-      </Form.Item>
-      <Form.Item className="form-group">
-        <label>Time to get to Subway</label> ({errors.minutes_to_metro || "*"})<br/>
-        <Input name="minutes_to_metro" className="form-control" type="number" value={inputs.minutes_to_metro}
-               onChange={onChange}/>
-      </Form.Item>
-      <Form.Item className="form-group">
-        <label>Number of Floors</label> ({errors.number_of_floors || "*"})<br/>
-        <Input name="number_of_floors" className="form-control" type="number" value={inputs.number_of_floors}
-               onChange={onChange}/>
-      </Form.Item>
-      <Form.Item className="form-group">
-        <label>Number of Rooms</label> ({errors.number_of_rooms || "*"})<br/>
-        <Input name="number_of_rooms" className="form-control" type="number" value={inputs.number_of_rooms}
-               onChange={onChange}/>
-      </Form.Item>
-      <Form.Item className="form-group">
-        <label>Apartment Type</label> ({errors.apartment_type || "*"})<br/>
-        <Select
-            style={{width: 200}}
-            placeholder="Select an apartment type"
-            value={inputs.apartment_type}
-            onSelect={onSelectApartmentType}
-        >
-          {data.apartment_type.map((item, index) => (
-              <Option key={index} value={item}>
-                {item}
-              </Option>
-          ))}
-        </Select>
-      </Form.Item>
-      <Form.Item className="form-group">
-        <Checkbox
-            name="is_penthouse"
-            checked={inputs.is_penthouse}
-            onChange={onChange}
-        >
-          Is Penthouse
-        </Checkbox>
-      </Form.Item>
-      <Form.Item className="form-group">
-        <label>Region</label> ({errors.region || "*"})<br/>
-        <Select
-            style={{width: 200}}
-            placeholder="Select a region"
-            value={inputs.region}
-            onSelect={onRegionChange}
-        >
-          {data.region.map((item, index) => (
-              <Option key={index} value={item}>
-                {item}
-              </Option>
-          ))}
-        </Select>
-      </Form.Item>
-      <Form.Item className="form-group">
-        <label>Renovation Type</label> ({errors.renovation_type || "*"})<br/>
-        <Select
-            style={{width: 200}}
-            placeholder="Select a renovation type"
-            value={inputs.renovation_type}
-            onSelect={onRenovationChange}
-        >
-          {data.renovation_type.map((item, index) => (
-              <Option key={index} value={item}>
-                {item}
-              </Option>
-          ))}
-        </Select>
-      </Form.Item>
-      <div>
-        <h2>Select a subway station</h2>
-        <Select
-            style={{width: 200}}
-            placeholder="Select an option"
-            dropdownStyle={{maxHeight: 400, overflow: 'auto'}}
-            value={inputs.selected_metro_station}
-            onSelect={onMetroStationChange}
-        >
-          {metro_stations.map((item, index) => (
-              <Option key={index} value={item}>
-                {item}
-              </Option>
-          ))}
-        </Select>
-      </div>
-      <div>
-         <Form.Item>
-        <Button type="primary" className="btn btn-primary" disabled={busy} htmlType="submit">
-          Process {busy && <i className="fa fa-spinner fa-pulse fa-1x fa-fw"></i>}
-        </Button>
-           </Form.Item>
-      </div>
-    </Form>
-  </div>
+  return (
+    <div className="p-3">
+      <h1 className="h3 mb-3">Input your Preferences</h1>
+      <Form autoComplete="off" style={{ maxWidth: "800px" }} onFinish={handleSubmit}>
+        <Form.Item label="Area" name="area" rules={[{ required: true, message: 'Please input the area!' }]}>
+          <Input type="number" value={inputs.area} onChange={onChange} />
+        </Form.Item>
+        <Form.Item label="Floor" name="floor" rules={[{ required: true, message: 'Please input the floor!' }]}>
+          <Input type="number" value={inputs.floor} onChange={onChange} />
+        </Form.Item>
+        <Form.Item label="Kitchen Area" name="kitchen_area" rules={[{ required: true, message: 'Please input the kitchen area!' }]}>
+          <Input type="number" value={inputs.kitchen_area} onChange={onChange} />
+        </Form.Item>
+        <Form.Item label="Living Area" name="living_area" rules={[{ required: true, message: 'Please input the living area!' }]}>
+          <Input type="number" value={inputs.living_area} onChange={onChange} />
+        </Form.Item>
+        <Form.Item label="Time to get to Subway" name="minutes_to_metro" rules={[{ required: true, message: 'Please input the time to subway!' }]}>
+          <Input type="number" value={inputs.minutes_to_metro} onChange={onChange} />
+        </Form.Item>
+        <Form.Item label="Number of Floors" name="number_of_floors" rules={[{ required: true, message: 'Please input the number of floors!' }]}>
+          <Input type="number" value={inputs.number_of_floors} onChange={onChange} />
+        </Form.Item>
+        <Form.Item label="Number of Rooms" name="number_of_rooms" rules={[{ required: true, message: 'Please input the number of rooms!' }]}>
+          <Input type="number" value={inputs.number_of_rooms} onChange={onChange} />
+        </Form.Item>
+        <Form.Item label="Apartment Type" name="apartment_type" rules={[{ required: true, message: 'Please select an apartment type!' }]}>
+          <Select placeholder="Select an apartment type" value={inputs.apartment_type} onChange={onSelectApartmentType}>
+            {data.apartment_type.map((item, index) => (
+              <Option key={index} value={item}>{item}</Option>
+            ))}
+          </Select>
+        </Form.Item>
+        <Form.Item name="is_penthouse" valuePropName="checked">
+          <Checkbox checked={inputs.is_penthouse} onChange={onChange}>Is Penthouse</Checkbox>
+        </Form.Item>
+        <Form.Item label="Region" name="region" rules={[{ required: true, message: 'Please select a region!' }]}>
+          <Select placeholder="Select a region" value={inputs.region} onChange={onRegionChange}>
+            {data.region.map((item, index) => (
+              <Option key={index} value={item}>{item}</Option>
+            ))}
+          </Select>
+        </Form.Item>
+        <Form.Item label="Renovation Type" name="renovation_type" rules={[{ required: true, message: 'Please select a renovation type!' }]}>
+          <Select placeholder="Select a renovation type" value={inputs.renovation_type} onChange={onRenovationChange}>
+            {data.renovation_type.map((item, index) => (
+              <Option key={index} value={item}>{item}</Option>
+            ))}
+          </Select>
+        </Form.Item>
+        <Form.Item label="Select a subway station" name="selected_metro_station" rules={[{ required: true, message: 'Please select a subway station!' }]}>
+          <Select placeholder="Select an option" value={inputs.selected_metro_station} onChange={onMetroStationChange}>
+            {metro_stations.map((item, index) => (
+              <Option key={index} value={item}>{item}</Option>
+            ))}
+          </Select>
+        </Form.Item>
+        <Form.Item>
+          <Button type="primary" htmlType="submit" disabled={busy}>
+            Process {busy && <i className="fa fa-spinner fa-pulse fa-1x fa-fw"></i>}
+          </Button>
+        </Form.Item>
+      </Form>
+    </div>
+  );
 }
 let schema = Y.object().shape({
   area: Y.number().required()
