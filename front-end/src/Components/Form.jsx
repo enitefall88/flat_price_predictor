@@ -40,7 +40,6 @@ export default function EditProfileForm({ data }) {
   });
 
   const schema = Y.object().shape({
-    // Define validation schema
   });
 
   async function onChange(event) {
